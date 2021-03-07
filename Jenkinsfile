@@ -10,7 +10,6 @@ pipeline {
      stage('Build') {
        steps {
          sh 'npm install'
-         npx wdio wdio.conf.js
        }
      }
      
