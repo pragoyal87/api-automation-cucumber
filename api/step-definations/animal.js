@@ -5,14 +5,21 @@ const { Given, When } = require('cucumber');
 const searchHeaderBuilder = require(`../supports/api-builder/builder/header/search-api`);
 const searchRequestBodyBuilder = require(`../supports/api-builder/builder/request/search-api`);
 const HeaderBuilder = require('../supports/builder/header');
+const getUrl = require('../supports/common/get-url');
+const responseStore = require(`../supports/store/response`);
 
-var serach = { method: 'POST',
-  url: 'https://jsonplaceholder.typicode.com/posts',
-  // body: { userId: 1, id: 1, title: 'animal test', body: 'type of animal' },
-  json: true };
+var serach = (journey) => {
+return {
+  method: 'POST',
+  url: `${getUrl(journey)}/posts`,
+  json: true ,
+  resolveWithFullResponse: true,
+  simple: true,
+  gzip: true
+};
+};
 
-
-When(/^As a user i wanted to create details$/,async function() { 
+When(/^As a user i want to add my animal details at (.*)$/,async function(journry) { 
 const headers = new searchHeaderBuilder()
   .set('Content-Type', 'application/json')
   .getAll()
@@ -22,11 +29,11 @@ const body = new searchRequestBodyBuilder()
 .get()
   
 let response;
-  let opts = merge(serach, { 
+  let opts = merge(serach(journry), { 
     headers,
     body
   })
-  console.log('-- request option---> ', JSON.stringify(opts));
+  console.log('-- add animal request details---> ', JSON.stringify(opts));
   try {
     response = await request(opts);
   } catch (e) {
@@ -35,7 +42,9 @@ let response;
       body: e.error
     };
   }
-  console.log('\n-- dsip inbound Response ---> ', JSON.stringify(response));
+  console.log('\n-- add animal Response details ---> ', JSON.stringify(response));
+  responseStore.set(response);
+ 
 });
 
 

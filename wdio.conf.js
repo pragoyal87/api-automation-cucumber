@@ -1,3 +1,10 @@
+const { removeSync } = require('fs-extra');
+const argv = require("yargs").argv;
+const urls = require('./configData/url.conf');
+const { generate } = require('multiple-cucumber-html-reporter');
+let env = process.env.ENV = (argv.ENV || 'build').toLowerCase();
+let tags = argv.tags;
+
 exports.config = {
     //
     // ====================
@@ -7,6 +14,8 @@ exports.config = {
     // WebdriverIO allows it to run your tests in arbitrary locations (e.g. locally or
     // on a remote machine).
     runner: 'local',
+    env: env,
+    serverURL: urls.getURL(env),
     //
     // ==================
     // Specify Test Files
@@ -128,7 +137,14 @@ exports.config = {
     // Test reporter for stdout.
     // The only one supported by default is 'dot'
     // see also: https://webdriver.io/docs/dot-reporter.html
-    reporters: ['spec'],
+    reporters: [
+         'spec',
+        ['cucumberjs-json', {
+            jsonFolder: '.tmp/json/',
+            language: 'en',
+        }]
+    ],
+
 
 
     //
@@ -155,7 +171,7 @@ exports.config = {
         // <boolean> fail if there are any undefined or pending steps
         strict: false,
         // <string> (expression) only execute the features or scenarios with tags matching the expression
-        tagExpression: '',
+        tagExpression: tags,
         // <number> timeout for step definitions
         timeout: 60000,
         // <boolean> Enable this config to treat undefined definitions as warnings.
@@ -175,8 +191,14 @@ exports.config = {
      * @param {Object} config wdio configuration object
      * @param {Array.<Object>} capabilities list of capabilities details
      */
-    // onPrepare: function (config, capabilities) {
-    // },
+    onPrepare: function (config, capabilities) {
+        // Remove the `tmp/` folder that holds the json report files
+        // removeSync(jsonTmpDirectory);
+        // if (!fs.existsSync(jsonTmpDirectory)){
+        //     fs.mkdirSync(jsonTmpDirectory);
+        // }
+        removeSync('.tmp/');
+    },
     /**
      * Gets executed before a worker process is spawned and can be used to initialise specific service
      * for that worker as well as modify runtime environments in an async fashion.
@@ -278,8 +300,18 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      * @param {<Object>} results object containing test results
      */
-    // onComplete: function(exitCode, config, capabilities, results) {
-    // },
+    onComplete: function(exitCode, config, capabilities, results) {
+
+        generate({
+            // Required
+            // This part needs to be the same path where you store the JSON files
+            // default = '.tmp/json/'
+            jsonDir: '.tmp/json/',
+            reportPath: '.tmp/report/',
+            // for more options see https://github.com/wswebcreation/multiple-cucumber-html-reporter#options
+          });
+        
+    },
     /**
     * Gets executed when a refresh happens.
     * @param {String} oldSessionId session ID of the old session
